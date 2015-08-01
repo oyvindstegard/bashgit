@@ -137,5 +137,5 @@ _bashgit_set_prompt() {
 
 # Invoke git status before prompt display:
 if [ "${PROMPT_COMMAND//_bashgit_set_prompt}" = "$PROMPT_COMMAND" ]; then
-    PROMPT_COMMAND="_bashgit_set_prompt; $PROMPT_COMMAND"
+    PROMPT_COMMAND="${PROMPT_COMMAND:+${PROMPT_COMMAND%;}; }_bashgit_set_prompt;"
 fi
