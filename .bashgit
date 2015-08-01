@@ -1,27 +1,35 @@
-# Git branch status in Bash prompt.
+# Simple git colored branch status in Bash prompt.
+# Version: 1.0
 #
-# Requires Bash and terminal with color support. This file should be source'd
-# from ~/.bashrc or similar *after* your initial PS1 prompt setup. Altering PS1
-# *after* enabling this code will currently not work properly.
+# Requires Git, Bash and terminal with color support. This file should be
+# source'd from ~/.bashrc or similar *after* your initial PS1 prompt setup. It
+# may not be able to inject status before your prompt suffix ('$ ', etc),
+# depending on use of colors and non-standard formatting. In that case, the git
+# status is simply appended. Note that altering PS1 *after* enabling this code
+# will currently not work properly without unsetting '_BASHGIT_ORIG' first.
+#
+# Minimum required git version is 1.7.2.
 #
 # Tries to be reasonably efficient with few forks and use of Bash builtins where
-# possible. Should stay efficient even with large number of uncommitted or
-# staged changes present.
+# possible.
 #
 # Displays color coded name of current branch (or best description if detached
-# HEAD), and optionally number of commits ahead/behind a remote tracking branch.
-# Green for clean, red for uncomitted changes etc., yellow for work tree
-# modifications and/or unknowns. Supports branch name truncation to keep prompt
-# from growing too much.
+# HEAD or tag), and optionally number of commits ahead/behind a remote tracking
+# branch. Green for clean, red for uncomitted changes etc., yellow for work tree
+# modifications and/or unknowns. Does branch name truncation to keep prompt from
+# growing too much.
+#
+# The following git config options are understood by bashgit:
+# - bashgit.showremote    (boolean) show remote ahead/behind status in prompt or not
+# - bashgit.branchlimit   (integer) max branch name length in prompt
+# - bashgit.untracked     (boolean) include untracked files as dirty state, false
+#                         gives better performance with large repositories.
 # 
 # Author: Øyvind Stegard <oyvind.stegard@ifi.uio.no>
 
-declare _GIT_PS1_REMOTE_STATUS=1     # Unset to disable remote branch status (numeric ahead/behind or diverge).
-declare _GIT_PS1_BRANCH_LIMIT=22     # Limit length of branch name in prompt (chars, <1 for unlimited)
-declare _GIT_PS1_REMOTE_DIVERGE=Y    # Symbol/char used to denote divergence with upstream branch
-declare _GIT_PS1_ORIG                # Preserve original PS1 prompt in this var
+declare _BASHGIT_ORIG                # Original PS1
 
-_set_git_prompt() {
+_bashgit_set_prompt() {
     type git &>/dev/null || return 1
 
     local   light_red='\[\033[1;31m\]'
@@ -31,14 +39,33 @@ _set_git_prompt() {
     local      yellow='\[\033[0;33m\]'
     local        blue='\[\033[0;34m\]'
     local       white='\[\033[1;37m\]'
-    local  light_gray='\[\033[0;37m\]'
+    local   dark_gray='\[\033[1;30m\]'
     local  color_none='\[\033[0m\]'
 
-    local IFS=$'\n' line count=0 state= branch= remote_state=0 pattern
+    local IFS=$'\n' line state branch= remote_state=0 pattern
 
-    git diff-index --quiet --cached HEAD &>/dev/null && state="$green" || state="$red"
+    # Initial check if index dirty state
+    git diff-index --quiet --cached HEAD 2>/dev/null
+    case $? in
+        0) state="$green";;
+        1) state="$red";;
+        *) # Likely not in a git work tree
+           [ "$_BASHGIT_ORIG" ] && PS1="$_BASHGIT_ORIG"  
+           return 2
+           ;;
+    esac
 
-    for line in $(git status --porcelain -b 2>/dev/null); do
+    # Options
+    local untracked branchlimit showremote
+    untracked=$(git config --bool bashgit.untracked 2>/dev/null)
+    branchlimit=$(git config --int bashgit.branchlimit 2>/dev/null)
+    showremote=$(git config --bool bashgit.showremote 2>/dev/null)
+    [ "$untracked" = false ] && untracked=no || untracked=normal
+    [ "$branchlimit" ] || branchlimit=22
+    [ "$showremote" = false ] && showremote= || showremote=true
+    
+    # Invoke git status
+    for line in $(git status --porcelain -b -u${untracked} 2>/dev/null); do
         pattern='^## ([^. ]*)(\.\.\.([^ ]*))?'
         if [ -z "$branch" ] && [[ $line =~ $pattern ]]; then
             branch="${BASH_REMATCH[1]}"
@@ -50,8 +77,8 @@ _set_git_prompt() {
                 fi
                 pattern='behind ([0-9]*)'
                 if [[ $line =~ $pattern ]]; then
-                    if [ $remote_state -ne 0 ]; then
-                        remote_state=$_GIT_PS1_REMOTE_DIVERGE # divergence
+                    if [ $remote_state != 0 ]; then
+                        remote_state="$remote_state,-${BASH_REMATCH[1]}" # divergence
                     else
                         remote_state="-${BASH_REMATCH[1]}" # behind (negative number)
                     fi
@@ -68,9 +95,7 @@ _set_git_prompt() {
 
     if [ -z "$branch" ]; then
         # git invocation failed, likely not inside a git work tree, cancel prompt injection.
-        if [ "$_GIT_PS1_ORIG" ]; then
-            PS1="$_GIT_PS1_ORIG"
-        fi
+        [ "$_BASHGIT_ORIG" ] && PS1="$_BASHGIT_ORIG"
         return 2
     elif [ "$branch" = HEAD ]; then
         # Unknown branch/detached HEAD
@@ -79,12 +104,12 @@ _set_git_prompt() {
     fi
 
     local remote=
-    if [ $remote_state != '0' ] && [ "$_GIT_PS1_REMOTE_STATUS" ]; then
-        remote=" ${remote_state}"
+    if [ $remote_state != '0' ] && [ "$showremote" ]; then
+        remote="|${dark_gray}${remote_state}${state}"
     fi
 
     # Branch name truncation
-    if [ $_GIT_PS1_BRANCH_LIMIT -gt 0 ] && [ ${#branch} -gt $_GIT_PS1_BRANCH_LIMIT ]; then
+    if [ $branchlimit -gt 0 ] && [ ${#branch} -gt $branchlimit ]; then
         pattern='^([^/]*)/([^/]*)$'
         if [[ ${branch} =~ $pattern ]]; then
             local branch_prefix=${BASH_REMATCH[1]}
@@ -93,26 +118,24 @@ _set_git_prompt() {
                 branch="${branch_prefix:0:3}/${branch_name}"
             fi
         fi
-        if [ ${#branch} -gt $_GIT_PS1_BRANCH_LIMIT ]; then
-            branch="${branch:0:${_GIT_PS1_BRANCH_LIMIT}}.."
+        if [ ${#branch} -gt $branchlimit ]; then
+            branch="${branch:0:${branchlimit}}.."
         fi
     fi
 
     # Preserve original PS1 before inject
-    [ "$_GIT_PS1_ORIG" ] || _GIT_PS1_ORIG=$PS1
+    [ "$_BASHGIT_ORIG" ] || _BASHGIT_ORIG=$PS1
 
-    # Prompt suffix removal
-    if [ "${PS1%\\\$ }" != "$PS1" ]; then
-        PS1="${_GIT_PS1_ORIG%\\\$ }${state}[${branch}${remote}]${color_none}\\\$ "
-    elif [ "${PS1%\$ }" != "$PS1" ]; then
-        PS1="${_GIT_PS1_ORIG%\$ }${state}[${branch}${remote}]${color_none}\$ "
-    else
-        # No standard suffix detected, just append.
-        PS1="${_GIT_PS1_ORIG}${state}[${branch}${remote}]${color_none} "
-    fi
+    # Injection before prompt suffix if possible
+    case $_BASHGIT_ORIG in
+        *'\$ ') PS1="${_BASHGIT_ORIG%\\\$ }${state}[${branch}${remote}]${color_none}\\\$ " ;;
+        *'$ ') PS1="${_BASHGIT_ORIG%\$ }${state}[${branch}${remote}]${color_none}\$ " ;;
+        *'# ') PS1="${_BASHGIT_ORIG%# }${state}[${branch}${remote}]${color_none}# " ;;
+        *) PS1="${_BASHGIT_ORIG}${state}[${branch}${remote}]${color_none} " ;;
+    esac
 }
 
 # Invoke git status before prompt display:
-if [ "${PROMPT_COMMAND//_set_git_prompt}" = "$PROMPT_COMMAND" ]; then
-    PROMPT_COMMAND="_set_git_prompt; $PROMPT_COMMAND"
+if [ "${PROMPT_COMMAND//_bashgit_set_prompt}" = "$PROMPT_COMMAND" ]; then
+    PROMPT_COMMAND="_bashgit_set_prompt; $PROMPT_COMMAND"
 fi
