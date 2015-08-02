@@ -5,8 +5,7 @@ Requires Git, Bash and terminal with color support. This file should be source'd
 from `~/.bashrc` or similar *after* your initial `PS1` prompt setup. It may not
 be able to inject status before your prompt suffix (`$ `, etc), depending on use
 of colors and non-standard formatting. In that case, the git status is simply
-appended. Note that altering `PS1` *after* enabling this code will currently not
-work properly without unsetting `_BASHGIT_ORIG` first.
+appended.
 
 Minimum required git version is **1.7.2**.
 
