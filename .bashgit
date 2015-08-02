@@ -1,22 +1,22 @@
-# Simple git colored branch status in Bash prompt.
+# Simple colored git branch status in Bash prompt.
 # Version: 1.0
 #
-# Requires Git, Bash and terminal with color support. This file should be
-# source'd from ~/.bashrc or similar *after* your initial PS1 prompt setup. It
-# may not be able to inject status before your prompt suffix ('$ ', etc),
+# Requires Git >= 1.7.2, Bash and terminal with color support. This file should
+# be source'd from ~/.bashrc or similar *after* your initial PS1 prompt setup.
+# It may not be able to inject status before your prompt suffix ('$ ', etc),
 # depending on use of colors and non-standard formatting. In that case, the git
 # status is simply appended.
 #
-# Minimum required git version is 1.7.2.
-#
-# Tries to be reasonably efficient with few forks and use of Bash builtins where
-# possible.
+# Tries to be reasonably efficient with use of shell builtins where possible.
 #
 # Displays color coded name of current branch (or best description if detached
 # HEAD or tag), and optionally number of commits ahead/behind a remote tracking
 # branch. Green for clean, red for uncomitted changes etc., yellow for work tree
 # modifications and/or unknowns. Does branch name truncation to keep prompt from
 # growing too much.
+#
+# Examples: [master|1,-2]          # 1 ahead, 2 behind remote tracking branch
+#           [bug/branch-na..]      # truncated form for branch "bugfix/branch-name".
 #
 # The following git config options are understood by bashgit:
 # - bashgit.showremote    (boolean) show remote ahead/behind status in prompt or not
@@ -26,21 +26,18 @@
 # 
 # Author: Øyvind Stegard <oyvind.stegard@ifi.uio.no>
 
-declare _BASHGIT_PS1_ORIG            # Original PS1
-declare _BASHGIT_PS1_PREV            # Previous PS1, which may include injected bashgit status.
+# Globals
+declare _BASHGIT_PS1_ORIG    # Original PS1
+declare _BASHGIT_PS1_PREV    # Previous PS1, may include injected bashgit status.
 
-_bashgit_set_ps1() {
+_bashgit_update_ps1() {
     type git &>/dev/null || return 1
 
-    local   light_red='\[\033[1;31m\]'
-    local         red='\[\033[0;31m\]'
-    local light_green='\[\033[1;32m\]'
-    local       green='\[\033[0;32m\]'
-    local      yellow='\[\033[0;33m\]'
-    local        blue='\[\033[0;34m\]'
-    local       white='\[\033[1;37m\]'
-    local   dark_gray='\[\033[1;30m\]'
-    local  color_none='\[\033[0m\]'
+    local         red='\[\e[0;31m\]'
+    local       green='\[\e[0;32m\]'
+    local      yellow='\[\e[0;33m\]'
+    local   dark_gray='\[\e[1;30m\]'
+    local  color_none='\[\e[0m\]'
 
     if [ -z "${_BASHGIT_PS1_PREV+x}" ] || [ "$PS1" != "$_BASHGIT_PS1_PREV" ]; then
         _BASHGIT_PS1_ORIG=$PS1
@@ -59,7 +56,7 @@ _bashgit_set_ps1() {
            ;;
     esac
 
-    # Options
+    # User options
     local untracked branchlimit showremote
     untracked=$(git config --bool bashgit.untracked 2>/dev/null)
     branchlimit=$(git config --int bashgit.branchlimit 2>/dev/null)
@@ -102,8 +99,7 @@ _bashgit_set_ps1() {
         [ "$_BASHGIT_PS1_ORIG" ] && PS1=$_BASHGIT_PS1_ORIG
         return 2
     elif [ "$branch" = HEAD ]; then
-        # Unknown branch/detached HEAD
-        # Try git-describe to get at most recent tag reachable from HEAD commit
+        # Unknown branch/detached HEAD, try git describe
         branch="$(git describe HEAD --always --tags 2>/dev/null)" || branch=HEAD
     fi
 
@@ -139,6 +135,6 @@ _bashgit_set_ps1() {
 }
 
 # Invoke git status before prompt display:
-if [ "${PROMPT_COMMAND//_bashgit_set_ps1}" = "$PROMPT_COMMAND" ]; then
-    PROMPT_COMMAND="${PROMPT_COMMAND:+${PROMPT_COMMAND%;}; }_bashgit_set_ps1;"
+if [ "${PROMPT_COMMAND//_bashgit_update_ps1}" = "$PROMPT_COMMAND" ]; then
+    PROMPT_COMMAND="${PROMPT_COMMAND:+${PROMPT_COMMAND%;}; }_bashgit_update_ps1;"
 fi
