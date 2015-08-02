@@ -26,7 +26,7 @@ Download:
 curl -o ~/.bashgit https://raw.githubusercontent.com/oyvindstegard/bashgit/master/.bashgit
 ```
 
-Append the following to ~/.bashrc:
+Append the following to `~/.bashrc`:
 
 ```sh
 if [ -f ~/.bashgit ]; then
