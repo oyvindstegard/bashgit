@@ -5,8 +5,7 @@
 # source'd from ~/.bashrc or similar *after* your initial PS1 prompt setup. It
 # may not be able to inject status before your prompt suffix ('$ ', etc),
 # depending on use of colors and non-standard formatting. In that case, the git
-# status is simply appended. Note that altering PS1 *after* enabling this code
-# will currently not work properly without unsetting '_BASHGIT_ORIG' first.
+# status is simply appended.
 #
 # Minimum required git version is 1.7.2.
 #
@@ -27,9 +26,10 @@
 # 
 # Author: Øyvind Stegard <oyvind.stegard@ifi.uio.no>
 
-declare _BASHGIT_ORIG                # Original PS1
+declare _BASHGIT_PS1_ORIG            # Original PS1
+declare _BASHGIT_PS1_PREV            # Previous PS1, which may include injected bashgit status.
 
-_bashgit_set_prompt() {
+_bashgit_set_ps1() {
     type git &>/dev/null || return 1
 
     local   light_red='\[\033[1;31m\]'
@@ -42,15 +42,19 @@ _bashgit_set_prompt() {
     local   dark_gray='\[\033[1;30m\]'
     local  color_none='\[\033[0m\]'
 
-    local IFS=$'\n' line state branch= remote_state=0 pattern
+    if [ -z "${_BASHGIT_PS1_PREV+x}" ] || [ "$PS1" != "$_BASHGIT_PS1_PREV" ]; then
+        _BASHGIT_PS1_ORIG=$PS1
+        _BASHGIT_PS1_PREV=$PS1
+    fi
 
+    local IFS=$'\n' line state branch= remote_state=0 pattern
     # Initial check if index dirty state
     git diff-index --quiet --cached HEAD 2>/dev/null
     case $? in
         0) state="$green";;
         1) state="$red";;
         *) # Likely not in a git work tree
-           [ "$_BASHGIT_ORIG" ] && PS1="$_BASHGIT_ORIG"  
+           [ "$_BASHGIT_PS1_ORIG" ] && PS1=$_BASHGIT_PS1_ORIG
            return 2
            ;;
     esac
@@ -95,7 +99,7 @@ _bashgit_set_prompt() {
 
     if [ -z "$branch" ]; then
         # git invocation failed, likely not inside a git work tree, cancel prompt injection.
-        [ "$_BASHGIT_ORIG" ] && PS1="$_BASHGIT_ORIG"
+        [ "$_BASHGIT_PS1_ORIG" ] && PS1=$_BASHGIT_PS1_ORIG
         return 2
     elif [ "$branch" = HEAD ]; then
         # Unknown branch/detached HEAD
@@ -123,19 +127,18 @@ _bashgit_set_prompt() {
         fi
     fi
 
-    # Preserve original PS1 before inject
-    [ "$_BASHGIT_ORIG" ] || _BASHGIT_ORIG=$PS1
-
-    # Injection before prompt suffix if possible
-    case $_BASHGIT_ORIG in
-        *'\$ ') PS1="${_BASHGIT_ORIG%\\\$ }${state}[${branch}${remote}]${color_none}\\\$ " ;;
-        *'$ ') PS1="${_BASHGIT_ORIG%\$ }${state}[${branch}${remote}]${color_none}\$ " ;;
-        *'# ') PS1="${_BASHGIT_ORIG%# }${state}[${branch}${remote}]${color_none}# " ;;
-        *) PS1="${_BASHGIT_ORIG}${state}[${branch}${remote}]${color_none} " ;;
+    # Update current PS1
+    local bashgit="${state}[${branch}${remote}]${color_none}"
+    case $_BASHGIT_PS1_ORIG in
+        *'\$ ') PS1="${_BASHGIT_PS1_ORIG%\\\$ }${bashgit}\\\$ " ;;
+        *'$ ') PS1="${_BASHGIT_PS1_ORIG%\$ }${bashgit}\$ " ;;
+        *'# ') PS1="${_BASHGIT_PS1_ORIG%# }${bashgit}# " ;;
+        *) PS1="${_BASHGIT_PS1_ORIG}${bashgit} " ;;
     esac
+    _BASHGIT_PS1_PREV=$PS1
 }
 
 # Invoke git status before prompt display:
-if [ "${PROMPT_COMMAND//_bashgit_set_prompt}" = "$PROMPT_COMMAND" ]; then
-    PROMPT_COMMAND="${PROMPT_COMMAND:+${PROMPT_COMMAND%;}; }_bashgit_set_prompt;"
+if [ "${PROMPT_COMMAND//_bashgit_set_ps1}" = "$PROMPT_COMMAND" ]; then
+    PROMPT_COMMAND="${PROMPT_COMMAND:+${PROMPT_COMMAND%;}; }_bashgit_set_ps1;"
 fi
