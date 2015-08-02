@@ -18,6 +18,17 @@ branch. Green for clean, red for uncomitted changes etc., yellow for work tree
 modifications and/or unknowns. Does branch name truncation to keep prompt from
 growing too much.
 
+## Installation
+
+```sh
+curl -o ~/.bashgit https://raw.githubusercontent.com/oyvindstegard/bashgit/master/.bashgit
+
+# Append the following to ~/.bashrc:
+if [ -f ~/.bashgit ]; then
+    . ~/.bashgit
+fi
+```
+
 ## The following git config options are understood by bashgit:
 - `bashgit.showremote`    (`boolean`) show remote ahead/behind status in prompt or not
 - `bashgit.branchlimit`   (`integer`) max branch name length in prompt
