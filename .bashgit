@@ -44,7 +44,7 @@ _bashgit_update_ps1() {
         _BASHGIT_PS1_PREV=$PS1
     fi
 
-    local IFS=$'\n' line state branch= remote_state=0 pattern
+    local IFS=$'\n' line state branch= remote_state= pattern
     # Initial check if index dirty state
     git diff-index --quiet --cached HEAD 2>/dev/null
     case $? in
@@ -67,10 +67,10 @@ _bashgit_update_ps1() {
     
     # Invoke git status
     for line in $(git status --porcelain -b -u${untracked} 2>/dev/null); do
-        pattern='^## ([^. ]*)(\.\.\.([^ ]*))?'
-        if [ -z "$branch" ] && [[ $line =~ $pattern ]]; then
-            branch="${BASH_REMATCH[1]}"
-            if [ "${BASH_REMATCH[3]}" ]; then
+        if [ -z "$branch" ] && [ "${line:0:3}" = '## ' ]; then
+            line=${line:3}
+            branch=${line%...*}
+            if [ "$branch" != "$line" ]; then
                 # Check ahead/behind/divergence from remote tracking branch
                 pattern='ahead ([0-9]*)'
                 if [[ $line =~ $pattern ]]; then
@@ -78,12 +78,10 @@ _bashgit_update_ps1() {
                 fi
                 pattern='behind ([0-9]*)'
                 if [[ $line =~ $pattern ]]; then
-                    if [ $remote_state != 0 ]; then
-                        remote_state="$remote_state,-${BASH_REMATCH[1]}" # divergence
-                    else
-                        remote_state="-${BASH_REMATCH[1]}" # behind (negative number)
-                    fi
+                    remote_state="${remote_state:+$remote_state,}-${BASH_REMATCH[1]}" # behind
                 fi
+            else
+                branch=${branch%% *}
             fi
             [ "$state" = "$red" ] && break || continue
         fi
@@ -104,13 +102,13 @@ _bashgit_update_ps1() {
     fi
 
     local remote=
-    if [ $remote_state != '0' ] && [ "$showremote" ]; then
+    if [ "$remote_state" ] && [ "$showremote" ]; then
         remote="|${dark_gray}${remote_state}${state}"
     fi
 
     # Branch name truncation
     if [ $branchlimit -gt 0 ] && [ ${#branch} -gt $branchlimit ]; then
-        pattern='^([^/]*)/([^/]*)$'
+        pattern='^([^/]*)/(.*)$'
         if [[ ${branch} =~ $pattern ]]; then
             local branch_prefix=${BASH_REMATCH[1]}
             local branch_name=${BASH_REMATCH[2]}
