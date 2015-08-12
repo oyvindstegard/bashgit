@@ -127,6 +127,8 @@ _bashgit_update_ps1() {
         *'\$ ') PS1="${_BASHGIT_PS1_ORIG%\\\$ }${bashgit}\\\$ " ;;
         *'$ ') PS1="${_BASHGIT_PS1_ORIG%\$ }${bashgit}\$ " ;;
         *'# ') PS1="${_BASHGIT_PS1_ORIG%# }${bashgit}# " ;;
+        *'% ') PS1="${_BASHGIT_PS1_ORIG%[%] }${bashgit}% " ;;
+        *'> ') PS1="${_BASHGIT_PS1_ORIG%> }${bashgit}> " ;;
         *) PS1="${_BASHGIT_PS1_ORIG}${bashgit} " ;;
     esac
     _BASHGIT_PS1_PREV=$PS1
