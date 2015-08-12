@@ -66,7 +66,7 @@ _bashgit_update_ps1() {
     [ "$showremote" = false ] && showremote= || showremote=true
     
     # Invoke git status
-    for line in $(git status --porcelain -b -u${untracked} 2>/dev/null); do
+    for line in $(git status --porcelain -bs -u${untracked} 2>/dev/null); do
         if [ -z "$branch" ] && [ "${line:0:3}" = '## ' ]; then
             line=${line:3}
             branch=${line%...*}
