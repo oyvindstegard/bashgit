@@ -69,11 +69,11 @@ _bashgit_update_ps1() {
             '## '*)
                 pattern='^## (Initial commit on )?((\.?[^ .])+)(\.\.\.([^ ]+) *(\[(ahead ([0-9]+)|(behind ([0-9]+))|(ahead ([0-9]+), behind ([0-9]+)))\])?)?'
                 if [[ $line =~ $pattern ]]; then
-                    branch=${BASH_REMATCH[2]}
-                    [ "${BASH_REMATCH[8]}" ] && rs=${BASH_REMATCH[8]}
-                    [ "${BASH_REMATCH[12]}" ] && rs=${BASH_REMATCH[12]}
-                    [ "${BASH_REMATCH[10]}" ] && rs="${rs:+$rs,}-${BASH_REMATCH[10]}"
-                    [ "${BASH_REMATCH[13]}" ] && rs="${rs:+$rs,}-${BASH_REMATCH[13]}"
+                    branch=${BASH_REMATCH[2]}                             # Current branch in capture group 2
+                    [ "${BASH_REMATCH[8]}" ] && rs=${BASH_REMATCH[8]}     # Ahead in capture group 8
+                    [ "${BASH_REMATCH[12]}" ] && rs=${BASH_REMATCH[12]}   # .. or capture group 12
+                    [ "${BASH_REMATCH[10]}" ] && rs="${rs:+$rs,}-${BASH_REMATCH[10]}" # Behind in capture group 10
+                    [ "${BASH_REMATCH[13]}" ] && rs="${rs:+$rs,}-${BASH_REMATCH[13]}" # .. or capture group 13
                 fi
                 ;;
             [MARCDU]?' '*)
