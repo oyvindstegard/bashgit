@@ -1,5 +1,5 @@
 # Simple colored git branch status in Bash prompt.
-Version: 1.0
+Version: 1.1
 
 Requires Git, Bash and terminal with color support. This file should be source'd
 from `~/.bashrc` or similar *after* your initial `PS1` prompt setup. It may not
@@ -9,8 +9,8 @@ appended.
 
 Minimum required git version is **1.7.2**.
 
-Tries to be reasonably efficient with few forks and use of Bash builtins where
-possible.
+Tries to be reasonably efficient by minimizing git calls (forks) and using shell
+builtins.
 
 Displays color coded name of current branch (or best description if detached
 HEAD or tag), and optionally number of commits ahead/behind a remote tracking
