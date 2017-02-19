@@ -1,5 +1,5 @@
 # Simple colored git branch status in Bash prompt.
-Version: 1.1
+Version: 1.2
 
 Requires Git, Bash and terminal with color support. This file should be source'd
 from `~/.bashrc` or similar *after* your initial `PS1` prompt setup. It may not
