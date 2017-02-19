@@ -1,5 +1,5 @@
 # Simple colored git branch status in Bash prompt.
-# Version: 1.1
+# Version: 1.2
 #
 # Requires Git >= 1.7.2, Bash and terminal with color support. This file should
 # be source'd from ~/.bashrc or similar *after* your initial PS1 prompt setup.
@@ -14,7 +14,7 @@
 # HEAD or tag), and optionally number of commits ahead/behind a remote tracking
 # branch. Green for clean, red for uncomitted changes etc., yellow for work tree
 # modifications and/or unknowns. Does branch name truncation to keep prompt from
-# growing too much.
+# growing too large (configurable).
 #
 # Examples: [master|1,-2]          # 1 ahead, 2 behind remote tracking branch
 #           [bug/branch-na..]      # truncated form for branch "bugfix/branch-name".
@@ -28,10 +28,11 @@
 # Author: Øyvind Stegard <oyvind.stegard@ifi.uio.no>
 
 # Globals
-declare _BASHGIT_PS1_ORIG    # Original PS1
-declare _BASHGIT_PS1_PREV    # Previous PS1, may include injected bashgit status.
+declare _BASHGIT_PS1_ORIG      # Original PS1
+declare _BASHGIT_PS1_PREV      # Previous PS1, may include injected bashgit status.
+declare _BASHGIT_PS1_PREV_PART # Previously injected bashgit part in PS1 prompt
 
-_bashgit_update_ps1() {
+_bashgit_update_PS1() {
     type git &>/dev/null || return 1
 
     local         red='\[\e[0;31m\]'
@@ -41,8 +42,13 @@ _bashgit_update_ps1() {
     local  color_none='\[\e[0m\]'
 
     if [ -z "${_BASHGIT_PS1_PREV+x}" ] || [ "$PS1" != "$_BASHGIT_PS1_PREV" ]; then
+        # Prompt changed by something else or this is first invocation
+        if [ "$_BASHGIT_PS1_PREV_PART" ]; then
+            PS1=${PS1//"$_BASHGIT_PS1_PREV_PART"}
+        fi
         _BASHGIT_PS1_ORIG=$PS1
         _BASHGIT_PS1_PREV=$PS1
+        _BASHGIT_PS1_PREV_PART=
     fi
 
     local IFS=$'\n' line state="$green" branch= rs= pattern noglob_orig=
@@ -87,7 +93,10 @@ _bashgit_update_ps1() {
 
     if [ -z "$branch" ]; then
         # git invocation failed, likely not inside a git work tree, cancel prompt injection.
-        [ "$_BASHGIT_PS1_ORIG" ] && PS1=$_BASHGIT_PS1_ORIG
+        if [ "$_BASHGIT_PS1_ORIG" ]; then
+            PS1=$_BASHGIT_PS1_ORIG
+            _BASHGIT_PS1_PREV_PART=
+        fi
         return 2
     elif [ "$branch" = HEAD ]; then
         # Unknown branch/detached HEAD, try git describe
@@ -124,10 +133,11 @@ _bashgit_update_ps1() {
         *'> ') PS1="${_BASHGIT_PS1_ORIG%> }${bashgit}> " ;;
         *) PS1="${_BASHGIT_PS1_ORIG}${bashgit} " ;;
     esac
+    _BASHGIT_PS1_PREV_PART=$bashgit
     _BASHGIT_PS1_PREV=$PS1
 }
 
-# Invoke git status before prompt display:
-if [ "${PROMPT_COMMAND//_bashgit_update_ps1}" = "$PROMPT_COMMAND" ]; then
-    PROMPT_COMMAND="${PROMPT_COMMAND:+${PROMPT_COMMAND%;}; }_bashgit_update_ps1;"
+# Setup invocation before prompt display:
+if [ "${PROMPT_COMMAND//_bashgit_update_PS1}" = "$PROMPT_COMMAND" ]; then
+    PROMPT_COMMAND="${PROMPT_COMMAND:+${PROMPT_COMMAND%;}; }_bashgit_update_PS1;"
 fi
