@@ -25,7 +25,7 @@
 # - bashgit.untracked     (boolean) include untracked files as dirty state, false
 #                         gives better performance with large repositories.
 #
-# Author: Øyvind Stegard <oyvind.stegard@ifi.uio.no>
+# Author: Øyvind Stegard <oyvind@stegard.net>
 
 # Globals
 declare _BASHGIT_PS1_ORIG      # Original PS1
