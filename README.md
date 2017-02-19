@@ -1,11 +1,13 @@
 # Simple colored git branch status in Bash prompt.
-Version: 1.2
+Version: 1.3
 
 Requires Git, Bash and terminal with color support. This file should be source'd
-from `~/.bashrc` or similar *after* your initial `PS1` prompt setup. It may not
-be able to inject status before your prompt suffix (`$ `, etc), depending on use
-of colors and non-standard formatting. In that case, the git status is simply
-appended.
+from `~/.bashrc` or similar. It may not be able to inject status before your
+prompt suffix (`$ `, etc), depending on use of colors and non-standard
+formatting. In that case, the git status is simply appended. In general it tries
+to be minimally invasive and robust with existing setups. It should work fine
+even if PS1 is modified after `.bashgit` has been loaded or when PS1 is modified
+with a git status currently present in the prompt.
 
 Minimum required git version is **1.7.2**.
 
