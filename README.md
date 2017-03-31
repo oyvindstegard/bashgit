@@ -1,5 +1,5 @@
 # Simple colored git branch status in Bash prompt.
-Version: 1.3
+Version: 4
 
 Requires Git, Bash and terminal with color support. This file should be source'd
 from `~/.bashrc` or similar. It may not be able to inject status before your
@@ -37,10 +37,12 @@ fi
 ```
 
 ## The following git config options are understood by bashgit:
+
 - `bashgit.showremote`    (`boolean`) show remote ahead/behind status in prompt or not
 - `bashgit.branchlimit`   (`integer`) max branch name length in prompt
 - `bashgit.untracked`     (`boolean`) include untracked files as dirty state, false
    gives better performance with large repositories.
 
 ## Screenshot
+
 ![Screenshot](http://stegard.net/dl/bashgitdemo.png)

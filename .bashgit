@@ -1,5 +1,5 @@
 # Simple colored git branch status in Bash prompt.
-# Version: 1.3
+# Version: 4
 #
 # Requires Git >= 1.7.2, Bash and terminal with color support. This file should
 # be source'd from ~/.bashrc or similar *after* your initial PS1 prompt setup.
@@ -28,9 +28,10 @@
 # Author: Øyvind Stegard <oyvind@stegard.net>
 
 # Globals
-declare _BASHGIT_PS1_ORIG      # Original PS1
-declare _BASHGIT_PS1_PREV      # Previous PS1, may include injected bashgit status.
-declare _BASHGIT_PS1_PREV_PART # Previously injected bashgit part in PS1 prompt
+declare _BASHGIT_PS1_ORIG       # Original PS1
+declare _BASHGIT_PS1_PREV       # Previous PS1, may include injected bashgit status.
+declare _BASHGIT_PS1_PREV_PART  # Previously injected bashgit part in PS1 prompt
+declare _BASHGIT_CUR_BRANCH     # Current branch name
 
 _bashgit_update_PS1() {
     type git &>/dev/null || return 1
@@ -123,8 +124,13 @@ _bashgit_update_PS1() {
         fi
     fi
 
+    # Branch name needs to be kept in separate global variable which is
+    # referenced from PS1 to avoid shell interpretation of its contents and
+    # potential security issues.
+    _BASHGIT_CUR_BRANCH=$branch
+
     # Update current PS1
-    local bashgit="${state}[${branch}${remote}]${color_none}"
+    local bashgit="${state}[\${_BASHGIT_CUR_BRANCH}${remote}]${color_none}"
     case $_BASHGIT_PS1_ORIG in
         *'\$ ') PS1="${_BASHGIT_PS1_ORIG%\\\$ }${bashgit}\\\$ " ;;
         *'$ ') PS1="${_BASHGIT_PS1_ORIG%\$ }${bashgit}\$ " ;;
