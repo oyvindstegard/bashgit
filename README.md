@@ -1,5 +1,5 @@
 # Simple colored git branch status in Bash prompt.
-Version: 4
+Current version: 5
 
 Requires Git, Bash and terminal with color support. This file should be source'd
 from `~/.bashrc` or similar. It may not be able to inject status before your

@@ -1,5 +1,5 @@
 # Simple colored git branch status in Bash prompt.
-# Version: 4
+# Version: 5
 #
 # Requires Git >= 1.7.2, Bash and terminal with color support. This file should
 # be source'd from ~/.bashrc or similar *after* your initial PS1 prompt setup.
@@ -57,7 +57,7 @@ _bashgit_update_PS1() {
     
     # User options
     local untracked=true untracked_param=normal showremote=true branchlimit=22
-    for line in $(git config --get-regexp '^bashgit\.' 2>/dev/null); do
+    for line in $(LC_MESSAGES=C git config --get-regexp '^bashgit\.' 2>/dev/null); do
         case $line in
             'bashgit.untracked '*) untracked=${line#* } ;;
             'bashgit.branchlimit '*) branchlimit=${line#* } ;;
@@ -67,14 +67,14 @@ _bashgit_update_PS1() {
     [ "$untracked" = false ] && untracked_param=no
 
     # Invoke git status and extract info
-    for line in $(git status --porcelain -bs -u${untracked_param} 2>/dev/null); do
+    for line in $(LC_MESSAGES=C git status --porcelain -bs -u${untracked_param} 2>/dev/null); do
         case $line in
             [\ ?][MD?]' '*)
                 state="$yellow" # Work tree changes and/or untracked files
                 # Have to keep scanning, because "red" state items may appear later in output
                 ;;
             '## '*)
-                pattern='^## (Initial commit on )?((\.?[^ .])+)(\.\.\.([^ ]+) *(\[(ahead ([0-9]+)|(behind ([0-9]+))|(ahead ([0-9]+), behind ([0-9]+)))\])?)?'
+                pattern='^## (Initial commit on |No commits yet on )?((\.?[^ .])+)(\.\.\.([^ ]+) *(\[(ahead ([0-9]+)|(behind ([0-9]+))|(ahead ([0-9]+), behind ([0-9]+)))\])?)?'
                 if [[ $line =~ $pattern ]]; then
                     branch=${BASH_REMATCH[2]}                             # Current branch in capture group 2
                     [ "${BASH_REMATCH[8]}" ] && rs=${BASH_REMATCH[8]}     # Ahead in capture group 8
