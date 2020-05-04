@@ -44,7 +44,7 @@ _bashgit_on() {
 _bashgit_update_PS1() {
     if [ "${_BASH_GIT_OFF}" = "true" ]; then
       # reset PS1
-      PS1=${PS1//"$_BASHGIT_PS1_PREV_PART"}
+      PS1=${PS1//" $_BASHGIT_PS1_PREV_PART"}
       return
     fi
     type git &>/dev/null || return 1
