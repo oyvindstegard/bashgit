@@ -33,20 +33,7 @@ declare _BASHGIT_PS1_PREV       # Previous PS1, may include injected bashgit sta
 declare _BASHGIT_PS1_PREV_PART  # Previously injected bashgit part in PS1 prompt
 declare _BASHGIT_CUR_BRANCH     # Current branch name
 
-_bashgit_off() {
-    _BASH_GIT_OFF=true
-}
-
-_bashgit_on() {
-    _BASH_GIT_OFF=
-}
-
 _bashgit_update_PS1() {
-    if [ "${_BASH_GIT_OFF}" = "true" ]; then
-      # reset PS1
-      PS1=${PS1//" $_BASHGIT_PS1_PREV_PART"}
-      return
-    fi
     type git &>/dev/null || return 1
 
     local         red='\[\e[0;31m\]'
