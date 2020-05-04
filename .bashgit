@@ -62,9 +62,19 @@ _bashgit_update_PS1() {
             'bashgit.untracked '*) untracked=${line#* } ;;
             'bashgit.branchlimit '*) branchlimit=${line#* } ;;
             'bashgit.showremote '*) showremote=${line#* } ;;
+            'bashgit.disabled '*) disabled=${line#* } ;;
         esac
     done
     [ "$untracked" = false ] && untracked_param=no
+
+    if [ "$disabled" = true ]; then
+        # bashgit is disabled, cancel prompt injection.
+        if [ "$_BASHGIT_PS1_ORIG" ]; then
+            PS1=$_BASHGIT_PS1_ORIG
+            _BASHGIT_PS1_PREV_PART=
+        fi
+        return 2
+    fi
 
     # Invoke git status and extract info
     for line in $(LC_MESSAGES=C git status --porcelain -bs -u${untracked_param} 2>/dev/null); do
