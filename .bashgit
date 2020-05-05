@@ -108,7 +108,7 @@ _bashgit_update_PS1() {
             PS1=$_BASHGIT_PS1_ORIG
             _BASHGIT_PS1_PREV_PART=
         fi
-        return 2
+        return 3
     elif [ "$branch" = HEAD ]; then
         # Unknown branch/detached HEAD, try git describe
         branch="$(git describe HEAD --always --tags 2>/dev/null)" || branch=HEAD
