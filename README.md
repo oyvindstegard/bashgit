@@ -1,13 +1,13 @@
 # Simple colored git branch status in Bash prompt.
-Current version: 5
+Current version: 6
 
 Requires Git, Bash and terminal with color support. This file should be source'd
 from `~/.bashrc` or similar. It may not be able to inject status before your
 prompt suffix (`$ `, etc), depending on use of colors and non-standard
 formatting. In that case, the git status is simply appended. In general it tries
 to be minimally invasive and robust with existing setups. It should work fine
-even if PS1 is modified after `.bashgit` has been loaded or when PS1 is modified
-with a git status currently present in the prompt.
+even if `PS1` is modified after `.bashgit` has been loaded or when `PS1` is
+modified with a git status currently present in the prompt.
 
 Minimum required git version is **1.7.2**.
 
@@ -42,6 +42,7 @@ fi
 - `bashgit.branchlimit`   (`integer`) max branch name length in prompt
 - `bashgit.untracked`     (`boolean`) include untracked files as dirty state, false
    gives better performance with large repositories.
+- `bashgit.disabled`      (`boolean`) completely disable bashgit if value is `true`.
 
 ## Screenshot
 
