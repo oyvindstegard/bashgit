@@ -56,15 +56,25 @@ _bashgit_update_PS1() {
     [ "${-/f}" = "$-" ] && set -f || noglob_orig=1
     
     # User options
-    local untracked=true untracked_param=normal showremote=true branchlimit=22
+    local untracked=true untracked_param=normal showremote=true branchlimit=22 disabled=false
     for line in $(LC_MESSAGES=C git config --get-regexp '^bashgit\.' 2>/dev/null); do
         case $line in
             'bashgit.untracked '*) untracked=${line#* } ;;
             'bashgit.branchlimit '*) branchlimit=${line#* } ;;
             'bashgit.showremote '*) showremote=${line#* } ;;
+            'bashgit.disabled '*) disabled=${line#* } ;;
         esac
     done
     [ "$untracked" = false ] && untracked_param=no
+
+    if [ "$disabled" = true ]; then
+        # bashgit is disabled, cancel prompt injection.
+        if [ "$_BASHGIT_PS1_ORIG" ]; then
+            PS1=$_BASHGIT_PS1_ORIG
+            _BASHGIT_PS1_PREV_PART=
+        fi
+        return 2
+    fi
 
     # Invoke git status and extract info
     for line in $(LC_MESSAGES=C git status --porcelain -bs -u${untracked_param} 2>/dev/null); do
