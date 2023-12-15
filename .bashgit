@@ -1,5 +1,5 @@
 # Simple colored git branch status in Bash prompt.
-# Version: 5
+# Version: 6
 #
 # Requires Git >= 1.7.2, Bash and terminal with color support. This file should
 # be source'd from ~/.bashrc or similar *after* your initial PS1 prompt setup.
@@ -24,6 +24,7 @@
 # - bashgit.branchlimit   (integer) max branch name length in prompt
 # - bashgit.untracked     (boolean) include untracked files as dirty state, false
 #                         gives better performance with large repositories.
+# - bashgit.disabled      (boolean) completely disable bashgit if value is `true`.
 #
 # Author: Øyvind Stegard <oyvind@stegard.net>
 
